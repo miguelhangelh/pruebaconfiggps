@@ -1,0 +1,45 @@
+buildscript {
+    ext.kotlin_version = '1.6.10'
+    ext {
+        kotlin_version     = '1.5.31'
+        compileSdkVersion   = 32
+        targetSdkVersion    = 32
+        appCompatVersion    = "1.4.0"
+        playServicesLocationVersion = "19.0.1"
+        removeBackgroundGeolocationDebugSoundsInRelease = true
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.1.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            url "${project(':background_fetch').projectDir}/libs"
+        }
+        maven {
+            url "${project(':flutter_background_geolocation').projectDir}/libs"
+        }
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
