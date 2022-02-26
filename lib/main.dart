@@ -1,5 +1,53 @@
 import 'package:background_fetch/background_fetch.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
+
+void backgroundGeolocationHeadlessTask(bg.HeadlessEvent headlessEvent) async {
+  switch (headlessEvent.name) {
+    case bg.Event.BOOT:
+      bg.State state = await bg.BackgroundGeolocation.state;
+      break;
+    case bg.Event.TERMINATE:
+      try {} catch (_) {}
+      break;
+    case bg.Event.HEARTBEAT:
+      break;
+    case bg.Event.LOCATION:
+      bg.Location? location = headlessEvent.event;
+      break;
+    case bg.Event.MOTIONCHANGE:
+      bg.Location? location = headlessEvent.event;
+      break;
+    case bg.Event.GEOFENCE:
+      bg.GeofenceEvent? geofenceEvent = headlessEvent.event;
+      break;
+    case bg.Event.GEOFENCESCHANGE:
+      bg.GeofencesChangeEvent? event = headlessEvent.event;
+      break;
+    case bg.Event.SCHEDULE:
+      bg.State? state = headlessEvent.event;
+      break;
+    case bg.Event.ACTIVITYCHANGE:
+      bg.ActivityChangeEvent? event = headlessEvent.event;
+      break;
+    case bg.Event.HTTP:
+      bg.HttpEvent? response = headlessEvent.event;
+      break;
+    case bg.Event.POWERSAVECHANGE:
+      bool? enabled = headlessEvent.event;
+      break;
+    case bg.Event.CONNECTIVITYCHANGE:
+      bg.ConnectivityChangeEvent? event = headlessEvent.event;
+      break;
+    case bg.Event.ENABLEDCHANGE:
+      bool? enabled = headlessEvent.event;
+      break;
+    case bg.Event.AUTHORIZATION:
+      bg.AuthorizationEvent? event = headlessEvent.event;
+      break;
+  }
+}
+
 void backgroundFetchHeadlessTask(HeadlessTask task) async {
   var taskId = task.taskId;
   var timeout = task.timeout;
@@ -9,22 +57,18 @@ void backgroundFetchHeadlessTask(HeadlessTask task) async {
     return;
   }
   print("[BackgroundFetch] Headless event received: $taskId");
-  if (taskId == 'com.deltaxlat.appdriver') {
-  }
-  if (taskId == 'com.deltaxlat.appdriver.tasks') {
-  }
-  if (taskId == 'com.deltaxlat.appdriver.multipoint') {
-  }
-  if (taskId == 'com.deltaxlat.appdriver.locations') {
-  }
+  if (taskId == 'com.deltaxlat.appdriver') {}
+  if (taskId == 'com.deltaxlat.appdriver.tasks') {}
+  if (taskId == 'com.deltaxlat.appdriver.multipoint') {}
+  if (taskId == 'com.deltaxlat.appdriver.locations') {}
   BackgroundFetch.finish(taskId);
 }
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
+  bg.BackgroundGeolocation.registerHeadlessTask(backgroundGeolocationHeadlessTask);
   BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
-
 }
 
 class MyApp extends StatelessWidget {
@@ -78,6 +122,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     initPlatformStates();
   }
+
   Future<void> initPlatformStates() async {
     await BackgroundFetch.configure(
         BackgroundFetchConfig(
@@ -92,14 +137,10 @@ class _MyHomePageState extends State<MyHomePage> {
           requiresDeviceIdle: false,
           requiredNetworkType: NetworkType.NONE,
         ), (String taskId) async {
-      if (taskId == 'com.deltaxlat.appdriver') {
-      }
-      if (taskId == 'com.deltaxlat.appdriver.tasks') {
-      }
-      if (taskId == 'com.deltaxlat.appdriver.locations') {
-      }
-      if (taskId == 'com.deltaxlat.appdriver.multipoint') {
-      }
+      if (taskId == 'com.deltaxlat.appdriver') {}
+      if (taskId == 'com.deltaxlat.appdriver.tasks') {}
+      if (taskId == 'com.deltaxlat.appdriver.locations') {}
+      if (taskId == 'com.deltaxlat.appdriver.multipoint') {}
       BackgroundFetch.finish(taskId);
     }, (String taskId) async {
       BackgroundFetch.finish(taskId);
@@ -144,6 +185,38 @@ class _MyHomePageState extends State<MyHomePage> {
       startOnBoot: true,
       enableHeadless: true,
     ));
+
+    await bg.BackgroundGeolocation.ready(
+      bg.Config(
+        locationUpdateInterval: 60000,
+        persistMode: bg.Config.PERSIST_MODE_GEOFENCE,
+        desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
+        distanceFilter: 10000.0,
+        enableHeadless: true,
+        stopOnTerminate: false,
+        startOnBoot: true,
+        notification: bg.Notification(
+          smallIcon: "drawable/ic_launcher_notification",
+          priority: bg.Config.NOTIFICATION_PRIORITY_HIGH,
+          sticky: true,
+          title: "Operación en curso",
+          strings: {},
+          layout: "",
+          actions: [],
+          text: 'Recuerda completar todas tus tareas.',
+        ),
+        showsBackgroundLocationIndicator: true,
+        backgroundPermissionRationale: bg.PermissionRationale(
+          title: "Permitir que DeltaX acceda a la ubicación de este dispositivo incluso cuando esté cerca o no esté en uso?",
+          message: "DeltaX recopila datos de tu ubicación, para realizar seguimiento a las cargas que transportas",
+          positiveAction: "Cambiar a 'Permitir todo el tiempo'",
+          negativeAction: "Cancelar",
+        ),
+        locationAuthorizationRequest: 'Always',
+        debug: false,
+      ),
+    );
+    await bg.BackgroundGeolocation.start();
   }
 
   void _incrementCounter() {
